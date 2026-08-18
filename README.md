@@ -3,6 +3,11 @@
 ## Description
 This project provisions a secure, publicly accessible web server on AWS using Terraform, with an automated CI/CD pipeline that scans every code change for security vulnerabilities before deployment. It demonstrates infrastructure as code, DevSecOps pipeline integration, and secure network design from a blank canvas to a live, production-style deployment.
 
+## Live Deployment Proof
+![Live web server verification](./screenshots/live-deployment.png)
+
+The Apache/Nginx default test page confirms the EC2 instance's `user_data` bootstrap script executed successfully and the security group correctly permits inbound HTTP traffic.
+
 ## Technologies Used
 - **AWS** (VPC, EC2, Security Groups, IAM)
 - **Terraform** (Infrastructure as Code)
