@@ -12,7 +12,7 @@ provider "aws" {
 }
 
 # --- THE NETWORK ---
-
+# tfsec:ignore:aws-ec2-require-vpc-flow-logs-for-all-vpcs -- Flow logs deferred; documented as follow-up hardening step in README
 resource "aws_vpc" "main" {
   cidr_block           = var.vpc_cidr
   enable_dns_support   = true
@@ -22,7 +22,7 @@ resource "aws_vpc" "main" {
     Name = "capstone-vpc"
   }
 }
-
+# tfsec:ignore:aws-ec2-no-public-ip-subnet -- Public IP required for direct web server accessibility per capstone requirement
 resource "aws_subnet" "public" {
   vpc_id                  = aws_vpc.main.id
   cidr_block              = var.subnet_cidr
@@ -61,7 +61,7 @@ resource "aws_route_table_association" "public" {
 }
 
 # --- THE FIREWALL ---
-
+# tfsec:ignore:aws-ec2-no-public-ingress-sgr -- Port 80 must be public per capstone requirement (public-facing web server)
 resource "aws_security_group" "web" {
   name        = "capstone-web-sg"
   description = "Allow HTTP from anywhere, SSH from home IP only"
@@ -82,8 +82,9 @@ resource "aws_security_group" "web" {
     protocol    = "tcp"
     cidr_blocks = [var.my_ip]
   }
-
+# tfsec:ignore:aws-ec2-no-public-egress-sgr -- Outbound internet required for yum package installation via user_data
   egress {
+    description = "Allow all outbound traffic"
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
@@ -117,7 +118,13 @@ resource "aws_instance" "web" {
   instance_type          = "t2.micro"
   subnet_id              = aws_subnet.public.id
   vpc_security_group_ids = [aws_security_group.web.id]
-
+  metadata_options {
+    http_tokens   = "required"
+    http_endpoint = "enabled"
+  }
+    root_block_device {
+    encrypted = true
+  }
   user_data = <<-EOF
               #!/bin/bash
               yum install -y httpd
